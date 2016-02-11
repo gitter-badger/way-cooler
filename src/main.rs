@@ -6,11 +6,11 @@ use rustwlc::handle::{WlcView, WlcOutput};
 use rustwlc::interface::*;
 use rustwlc::input::{pointer, keyboard};
 
-/*
+
 struct CompositorAction {
-    view: WlcView,
-    grab: Point,
-    edges: u32
+    pub view: WlcView,
+    pub grab: Point,
+    pub edges: u32
 }
 
 static mut compositor: CompositorAction = CompositorAction {
@@ -18,7 +18,6 @@ static mut compositor: CompositorAction = CompositorAction {
     grab: Point{ x: 0, y: 0},
     edges: 0
 };
-*/ 
 fn main() {
     let interface: WlcInterface = WlcInterface {
         output: OutputInterface {
@@ -76,7 +75,16 @@ fn main() {
 
 // Important rendering functions copied from wlc/example/example.c
 
-fn start_interactive_action(view: WlcView, origin: Point) -> bool {
+fn start_interactive_action(view: WlcView, origin: &Point) -> bool {
+    unsafe {
+        // Have to clone cause move semantics
+        // I suggest instead making them references
+        // (in the compositor)
+        // That way no need to clone here
+        compositor.view = view.clone();
+        compositor.grab = origin.clone();
+        view.bring_to_front();
+    };
     true
 }
 
@@ -88,7 +96,8 @@ fn start_interactive_move(view: WlcView, origin: Point) {
     
 }
 
-fn start_interactive_resize(view: WlcView, edges: u32, origin: Point) {
+fn start_interactive_resize(view: WlcView, mut edges:  &u32, origin: Point) {
+    let geometry = view.get_geometry();
     
 }
 
@@ -225,8 +234,17 @@ extern fn view_request_move(view: WlcView, dest: &Point) {
 }
 
 extern fn view_request_resize(view: WlcView, edge: ResizeEdge, location: &Point) {
+    // Here is the next thing to change
     println!("view_request_resize: size {:?}, to {}, start interactive mode.",
              edge, *location);
+    // gahhh ok clean up
+    // Edges needs to be 0, need to trace where that actually is
+    // I think each view has an edge starting at 0?
+    // IDK, run their example through gdb
+    let mut a = 0;
+    // Here clean up that clone again (need to pass by mutable reference?)
+    start_interactive_resize(view, &mut a, location.clone());
+    println!("{}", a);
 }
 
 extern fn view_request_render_pre(view: WlcView) {
