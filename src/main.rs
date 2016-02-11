@@ -8,13 +8,13 @@ use rustwlc::input::{pointer, keyboard};
 
 
 struct CompositorAction {
-    pub view: WlcView,
+    pub view: Option<WlcView>,
     pub grab: Point,
     pub edges: u32
 }
 
 static mut compositor: CompositorAction = CompositorAction {
-    view: WlcView(0),
+    view: None,
     grab: Point{ x: 0, y: 0},
     edges: 0
 };
@@ -81,7 +81,10 @@ fn start_interactive_action(view: WlcView, origin: &Point) -> bool {
         // I suggest instead making them references
         // (in the compositor)
         // That way no need to clone here
-        compositor.view = view.clone();
+        if compositor.view.is_some() {
+            return false;
+        }
+        compositor.view = Some(view.clone());
         compositor.grab = origin.clone();
         view.bring_to_front();
     };
