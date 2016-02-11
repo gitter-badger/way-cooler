@@ -101,7 +101,40 @@ fn start_interactive_move(view: WlcView, origin: Point) {
 }
 
 fn start_interactive_resize(view: WlcView, mut edges:  &u32, origin: Point) {
-    let geometry = view.get_geometry();
+    unsafe {
+        let geometry = view.get_geometry().unwrap();
+        // See here maybe we should return a Result?
+        // Cause it'll do the same thing, but warn us if we don't check it!
+        if ! start_interactive_action(view.clone(), &origin) {
+            return;
+        }
+        let halfw = geometry.origin.x + geometry.size.w as i32 / 2;
+        let halfh = geometry.origin.y + geometry.size.h as i32 / 2;
+
+        compositor.edges = edges.clone();
+        if compositor.edges == 0 {
+            let x = if origin.x < halfw {
+                ResizeEdge::Left as u32
+            } else if origin.x > halfw {
+                ResizeEdge::Right as u32
+            } else {
+                ResizeEdge::None as u32
+            };
+
+            let y = if origin.y < halfh {
+                ResizeEdge::Top as u32
+            } else if origin.y > halfh {
+                ResizeEdge::Bottom as u32
+            } else {
+                ResizeEdge::None as u32
+            };
+
+            compositor.edges = x | y;
+        }
+
+        view.set_state(ViewState::Resizing, true);
+
+    }
     
 }
 
