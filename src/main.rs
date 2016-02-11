@@ -96,6 +96,7 @@ fn stop_interactive_action() {
 }
 
 fn start_interactive_move(view: WlcView, origin: Point) {
+    start_interactive_action(view, &origin);
     
 }
 
