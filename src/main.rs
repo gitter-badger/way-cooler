@@ -92,7 +92,14 @@ fn start_interactive_action(view: WlcView, origin: &Point) -> bool {
 }
 
 fn stop_interactive_action() {
-    
+    unsafe {
+    if compositor.view.is_none() {
+        return;
+    }
+        compositor.view = None;
+        compositor.grab = Point{ x: 0, y: 0};
+        compositor.edges = 0;
+    }
 }
 
 fn start_interactive_move(view: WlcView, origin: Point) {
