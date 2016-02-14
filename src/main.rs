@@ -145,9 +145,16 @@ fn start_interactive_resize(view: WlcView, mut edges:  &u32, origin: Point) {
     
 }
 
-fn get_topmost_view(output: WlcOutput, offset: Size) {
-    
+fn get_topmost_view(output: WlcOutput, offset: usize) -> Option<WlcView> {
+    let views = output.get_views();
+    if views.len() > 0 {
+        Some(views[(views.len() - 1 + offset) % views.len()].clone())
+    } else {
+        None
+    }
 }
+
+
 
 /// From example.c:
 /// very simple layout function
