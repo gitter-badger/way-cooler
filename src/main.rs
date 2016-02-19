@@ -81,9 +81,12 @@ fn start_interactive_action(view: WlcView, origin: &Point) -> bool {
         // I suggest instead making them references
         // (in the compositor)
         // That way no need to clone here
+        println!("Checking compositor!");
         if compositor.view.is_some() {
+            println!("Compositor was already set!");
             return false;
         }
+        println!("Setting compositor");
         compositor.view = Some(view.clone());
         compositor.grab = origin.clone();
         view.bring_to_front();
@@ -93,9 +96,10 @@ fn start_interactive_action(view: WlcView, origin: &Point) -> bool {
 
 fn stop_interactive_action() {
     unsafe {
-    if compositor.view.is_none() {
-        return;
-    }
+        if compositor.view.is_none() {
+            return;
+        }
+        println!("Unsetting compositor!");
         compositor.view = None;
         compositor.grab = Point{ x: 0, y: 0};
         compositor.edges = 0;
@@ -318,13 +322,26 @@ extern fn keyboard_key(view: WlcView, time: u32, mods_ptr: &KeyboardModifiers,
     false
 }
 
-extern fn pointer_button(view: WlcView, button: u32, mods_ptr: &KeyboardModifiers,
-                         key: u32, state: ButtonState, point_ptr: &Point) -> bool {
-    println!("pointer_button: pressed {} at {}", key, *point_ptr);
+extern fn pointer_button(view: WlcView, time: u32, modifiers: &KeyboardModifiers,
+                         key: u32, state: ButtonState, point: &Point) -> bool {
+    println!("pointer_button: pressed {} at {} with view {:?}", key, *point, view);
     if state == ButtonState::Pressed {
         view.focus();
+        if view.0 != 0 {
+            if modifiers.mods == KeyModifier::Ctrl {
+                // Button left, we need to include linux/input.h somehow
+                if key == 0x110 {
+                    start_interactive_move(view.clone(), point.clone());
+                }
+                if key == 0x111 {
+                    start_interactive_resize(view.clone(), &0, point.clone());
+                }
+            }
+        } else {
+            stop_interactive_action();
+        }
     }
-    false
+    unsafe { return compositor.view.is_some() };
 }
 
 extern fn pointer_scroll(view: WlcView, button: u32, mods_ptr: &KeyboardModifiers,
