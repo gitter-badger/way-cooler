@@ -327,7 +327,7 @@ extern fn pointer_button(view: WlcView, time: u32, modifiers: &KeyboardModifiers
     println!("pointer_button: pressed {} at {} with view {:?}", key, *point, view);
     if state == ButtonState::Pressed {
         view.focus();
-        if view.0 != 0 {
+        if view.is_some() {
             if modifiers.mods == KeyModifier::Ctrl {
                 // Button left, we need to include linux/input.h somehow
                 if key == 0x110 {
@@ -350,8 +350,8 @@ extern fn pointer_scroll(view: WlcView, button: u32, mods_ptr: &KeyboardModifier
     false
 }
 
-extern fn pointer_motion(view: WlcView, time: u32, point: &Point) {
-    pointer::set_position(point);
+extern fn pointer_motion(view: WlcView, time: u32, point: &Point) -> bool {
+    pointer::set_position(point); true
 }
 
 extern fn touch_touch(view: WlcView, time: u32, mods_ptr: &KeyboardModifiers,
